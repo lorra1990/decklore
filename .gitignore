@@ -1,5 +1,6 @@
 # 生成的输出目录
 build/
+outlines/
 
 # 视觉自检产生的临时图片
 slide-*.jpg
