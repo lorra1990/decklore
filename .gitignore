@@ -1,0 +1,21 @@
+# 生成的输出目录
+build/
+
+# 视觉自检产生的临时图片
+slide-*.jpg
+
+# Office / PPT 临时文件
+~$*.pptx
+.~*.pptx
+*.tmp
+
+# 操作系统自动生成的文件
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# 依赖与环境 (如果有用到 Node.js)
+node_modules/
+.env
+.env.local
