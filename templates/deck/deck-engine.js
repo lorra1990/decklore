@@ -22,6 +22,8 @@
 //   3) 边距纪律:每页内容一律收在 x=0.5 ~ 12.8(左右各 0.5" 留白),多卡行右缘必须对齐 12.8。
 //   4) 图标克制:只在"有意义处"用(标题1枚 / 主卡系列 / 关键面板徽标),不做填充式水印。
 //      —— iconAt 带 transparency 参数的"水印式"调用会被直接跳过(见函数内注释)。
+//   5) 图标禁用清单(铁律,只增不减):❌ FaBrain(大脑)——俗套 AI 图标,显廉价/模板感,一律不用。
+//      模型 / 智能体 / AI 场景改用 FaMicrochip(芯片)等中性专业图标。以后新增禁用项往这条追加。
 // ============================================================================
 
 const React = require("react");
@@ -234,4 +236,11 @@ function createEngine(pres) {
   };
 }
 
-module.exports = { createEngine, C, IK, FA, LH_BODY, rt, rtBul, PW, PH, MARGIN, RIGHT, CONTENT_W, BTOP, BBOT, GAP, botY };
+// ---------- 主题切换:在 createEngine 之前调用,把新调色板合并进模块级 C / IK ----------
+// 各 primitive 与页面都通过闭包引用同一个 C / IK 对象,原地合并即全局生效(默认不调用=柔光蓝)。
+function applyTheme(theme) {
+  if (theme && theme.C) Object.assign(C, theme.C);
+  if (theme && theme.IK) Object.assign(IK, theme.IK);
+}
+
+module.exports = { createEngine, applyTheme, C, IK, FA, LH_BODY, rt, rtBul, PW, PH, MARGIN, RIGHT, CONTENT_W, BTOP, BBOT, GAP, botY };
