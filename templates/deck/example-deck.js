@@ -16,14 +16,14 @@ pres.layout = "LAYOUT_WIDE";
 
 const E = createEngine(pres);
 const { C, IK, FA, FONT, FONT_NUM, PW, RIGHT, MARGIN,
-  card, panel, tabCard, statCard, numDot, sectionLabel,
+  card, panel, tabCard, statCard, numDot, sectionLabel, softChart,
   addPageTitle, newSlide, chipOnPanel, row } = E;
 
 const FOOT = "示例 deck · 用 deck-engine 生成";
 const slide = (p, t, i, total) => newSlide(p, t, i, { foot: FOOT, total });
 
 // ---- 你的大纲(示意) ----
-const TOTAL = 4;
+const TOTAL = 5;
 
 (async () => {
 
@@ -90,6 +90,22 @@ const TOTAL = 4;
     for (let i = 0; i < stats.length; i++) statCard(s, r.x(i), 2.45, r.w, 1.5, stats[i][0], stats[i][1], stats[i][2], stats[i][3]);
     card(s, MARGIN, 4.3, PW - 1.0, 1.0, { fill: C.bluePale, border: C.bluePale });
     s.addText("淡蓝底面板:放补充说明 / 边界声明 / 一句话提醒。", { x: 0.8, y: 4.3, w: 11.7, h: 1.0, color: C.ink, fontSize: 13, fontFace: FONT, valign: "middle", margin: 0 });
+  }
+
+  // ===== 模式 E:原生可编辑图表(softChart)=====
+  // 领导端可直接改数据;定制标注多的图(高亮带/参考线/平台期)仍手搭。
+  {
+    const s = slide("04", "数据图表", 5, TOTAL);
+    await addPageTitle(s, FA.FaChartBar, "示例:原生可编辑图表用 softChart", "柔光蓝预设:主蓝/柔青系列、圆角图区、弱轴标、细网格、数据标签 12pt。");
+    const r = row(2, 0.4);
+    sectionLabel(s, r.x(0), 2.1, 5, "柱状:季度产值(亿元)", C.blue);
+    softChart(s, "bar", [
+      { name: "产值", labels: ["Q1", "Q2", "Q3", "Q4"], values: [4.2, 5.1, 6.3, 7.4] },
+    ], r.x(0), 2.5, r.w, 3.8, { dataLabelFormatCode: "0.0" });
+    sectionLabel(s, r.x(1), 2.1, 5, "折线:负荷率走势(%)", C.teal);
+    softChart(s, "line", [
+      { name: "负荷率", labels: ["7月", "8月", "9月", "10月", "11月", "12月"], values: [97, 100, 144, 144, 156, 129] },
+    ], r.x(1), 2.5, r.w, 3.8, { chartColors: [C.teal] });
   }
 
   await pres.writeFile({ fileName: "example-deck.pptx" });

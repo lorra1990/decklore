@@ -3,6 +3,8 @@
 > 目的:把"柔光蓝风格 + 圆角版式 + 矢量图标 + 边距纪律"沉淀成一套**可复用、可交付给别人**的流程。
 > 拿到**任何一份大纲**,照本手册走,就能稳定产出和 `知识工程_知识中台二期立项_15页.pptx` 同一水准的 deck。
 >
+> **与 CLAUDE.md 的分工**:总纲 / 硬约束 / 铁律"触发点"在 `../../CLAUDE.md`;**本手册是它指向的详版(每条怎么做)**。风格轨道选择、字体政策以 CLAUDE.md 为准,本文件不再重述,只讲落地做法。
+>
 > 配套文件:
 > - `deck-engine.js` —— 引擎(配色 / 图标 / 圆角版式 primitives)
 > - `example-deck.js` —— 最小起手式(四种最常用版式,可直接复制改)
@@ -90,12 +92,12 @@ decklore/
 
 ### 3.3 配色纪律
 - **跨轨道铁律(先定轨道,再配色)**:一种主色 60–70% 主导 + **一个**辅色 + 一个克制点缀,**≤3 个强色,绝不让四五个高饱和色平分版面**;饱和色只打在卡头/分隔页/数字上,背景留中性。**活泼 ≠ 花哨**(尤其活泼产品轨道最易翻车,见 `styles/lively-product.md`)。
-- 三条轨道选一:`styles/soft-blue-unionpay.md`(柔光蓝·默认)/ `styles/lively-product.md`(活泼产品)/ `styles/soe-finance.md`(重蓝金)。
-- 柔光蓝轨道补充:主蓝主导 + 柔青一个辅色 + 陶土极少;**不用金、不用纯红纯绿**;三级层次都在一个蓝里(中蓝实底 / 淡蓝底 / 白卡)。
+- 轨道怎么选见 CLAUDE.md §3 表(默认柔光蓝);选定后照对应 `styles/*.md` 配色。
+- 柔光蓝轨道落地:主蓝主导 + 柔青一个辅色 + 陶土极少;**不用金、不用纯红纯绿**;三级层次都在一个蓝里(中蓝实底 / 淡蓝底 / 白卡)。
 
 ### 3.4 文字纪律
 - 文本**绝不溢出形状**:放不下就缩字号 / 拆页 / 扩容器。
-- 字体规范:**标题=微软雅黑,正文=仿宋(或宋体,小字密集时更清晰),数字/英文/代码=Arial / Consolas**。均为 Windows 自带,目标端原生;macOS 不预装→预览替换为相近字体(雅黑→苹方、仿宋→华文仿宋、宋体→宋体-简),要两端一致就在 PowerPoint 勾"嵌入字体"。引擎已拆 `FONT_TITLE` / `FONT_BODY` / `FONT_NUM`。
+- 字体政策(雅黑标题 / 仿宋正文 / Arial 数字、macOS 替换、嵌入字体)见 CLAUDE.md §4;引擎已拆 `FONT_TITLE` / `FONT_BODY` / `FONT_NUM`,直接用,别在页里硬写字体名。
 - **正文行高 = 1.5**(实战定稿):多行正文 / 分点列表统一 `lineSpacingMultiple: 1.5`(引擎导出 `LH_BODY`)。单行标签 / 大数字 / 表格密集数据不强求;**容器高度按 1.5 预留**,别套旧的紧凑高度否则末行溢出。
 - **正文造重点 = 加粗一个焦点**(实战定稿,属"填内容"步):整段正文 / 每个分点,**只加粗一个关键词**(关键数字 / 结论词 / 对比词),给读者视觉落点;**别整句粗、也别一处不粗**。引擎已备 `rt("…**词**…", opt)`(整段)、`rtBul([...], opt)`(分点,字面圆点 + 段末 breakLine,稳)。⚠ pptxgenjs 的 `bullet` 段落属性在"多 run 混排(粗+常规)"时不稳(圆点丢/串行),所以分点统一走 `rtBul`,别手挂 `bullet`。
 
@@ -122,19 +124,19 @@ decklore/
 # 1) 生成(在 templates/deck/ 或 build/ 下)
 NODE_PATH=$(npm root -g) node example-deck.js        # 或 build_deck.js
 
-# 2) 转图自检(核心动作)
-python3 <pptx-skill>/scripts/office/soffice.py --headless --convert-to pdf out.pptx
+# 2) 转图自检(核心动作)—— <soffice> 换成本环境的转换器(claude.ai:当前 pptx 技能的 soffice 脚本;本机/其他:系统 soffice)
+<soffice> --headless --convert-to pdf out.pptx
 rm -f slide-*.jpg
 pdftoppm -jpeg -r 120 out.pdf slide                  # 生成 slide-01.jpg ...
 
 # 3) 把 slide-*.jpg 逐页交给"视觉自检"——用 subagent / 新鲜眼睛挑:
 #    文本溢出(最优先)> 元素重叠 > 对不齐 > 留白不均 > 左右边距不一致
 
-# 4) 残留占位符
-python3 -m markitdown out.pptx | grep -iE "lorem|ipsum|xxxx|TODO|\[insert"
+# 4) 残留占位符(extract-text 或 markitdown,取本环境可用者)
+extract-text out.pptx | grep -iE "lorem|ipsum|xxxx|TODO|\[insert"
 ```
 
-> **字体回退提醒**:本机(Mac)+ LibreOffice 转图时,微软雅黑会回退成黑体/楷体,**仿宋/宋体(中文名)会回退成黑体**(看不出衬线)——都是**预览机现象**,不影响 Windows 显示。QA 时只判版面 / 颜色 / 对齐 / 溢出,**忽略字形**。
+> 命令口径 / 通用占位符说明见 CLAUDE.md §6;字体回退是转图预览机现象,**QA 只判版面别判字形**(同 CLAUDE.md §4)。
 
 ---
 

@@ -65,7 +65,8 @@ function rt(str, opt = {}) {
   return _segBold(str).map(([t, b]) => ({ text: t, options: { fontFace: FONT_BODY, ...opt, bold: b || !!opt.bold } }));
 }
 function rtBul(arr, opt = {}) {
-  const out = [], base = { fontFace: FONT_BODY, color: C.text, fontSize: 12, lineSpacingMultiple: LH_BODY, ...opt };
+  // 正文下限 13pt(2026-07 定稿:12pt 被领导端反馈仍偏小)
+  const out = [], base = { fontFace: FONT_BODY, color: C.text, fontSize: 13, lineSpacingMultiple: LH_BODY, ...opt };
   (arr || []).forEach((str) => {
     const segs = _segBold(str);
     out.push({ text: "•  ", options: { ...base, bold: false, color: C.textMid } });
@@ -177,11 +178,44 @@ function createEngine(pres) {
       { text: num, options: { color: accent, bold: true, fontSize: 34, fontFace: FONT_NUM } },
       { text: unit ? " " + unit : "", options: { color: C.textMid, fontSize: 13, fontFace: FONT } }
     ], { x: x + 0.22, y: y + 0.16, w: w - 0.34, h: 0.62, margin: 0, valign: "middle" });
-    s.addText(label, { x: x + 0.22, y: y + 0.82, w: w - 0.34, h: h - 0.94, color: C.text, fontSize: 11, fontFace: FONT_BODY, margin: 0, valign: "top" });
+    s.addText(label, { x: x + 0.22, y: y + 0.82, w: w - 0.34, h: h - 0.94, color: C.text, fontSize: 12, fontFace: FONT_BODY, margin: 0, valign: "top" });
   }
   // 小节标题(纯文字,克制,不挂图标;颜色区分组别)
   function sectionLabel(s, x, y, w, text, color = C.blue) {
     s.addText(text, { x, y, w, h: 0.32, color, bold: true, fontSize: 13, fontFace: FONT, charSpacing: 2, margin: 0, valign: "middle" });
+  }
+
+  // ---- 原生图表(可编辑)----
+  // softChart(s, 'bar'|'line'|'pie'|'doughnut', data, x, y, w, h, opt)
+  //   领导端可直接改数据的原生图表,柔光蓝预设:主蓝/柔青系列、圆角白图区、
+  //   弱化轴标(#666)、细网格、外置数据标签。字号守下限(轴/标签 12pt)。
+  //   data: pptxgenjs 格式 [{ name, labels:[...], values:[...] }, ...]
+  //   opt 可覆盖任意 addChart 选项;定制标注多的图(高亮带/参考线)仍走手搭。
+  function softChart(s, type, data, x, y, w, h, opt = {}) {
+    const T = { bar: pres.charts.BAR, line: pres.charts.LINE, pie: pres.charts.PIE, doughnut: pres.charts.DOUGHNUT }[type] || type;
+    // 单系列柱状按"配色克制"用单色(pptxgenjs 默认会按点变色);饼/环例外
+    const mono = (data || []).length === 1 && type !== "pie" && type !== "doughnut";
+    const base = {
+      x, y, w, h,
+      chartColors: opt.chartColors || (mono ? [C.blue] : [C.blue, C.teal, C.blueMid, C.blueSoft, C.warn]),
+      chartArea: { fill: { color: C.card }, roundedCorners: true },
+      plotArea: { fill: { color: C.card } },
+      catAxisLabelColor: C.textMid, valAxisLabelColor: C.textMid,
+      catAxisLabelFontSize: 12, valAxisLabelFontSize: 12,
+      catAxisLabelFontFace: FONT_BODY, valAxisLabelFontFace: FONT_NUM,
+      catAxisLineColor: C.border, valAxisLineColor: C.border,
+      valGridLine: { color: C.border, size: 0.5 }, catGridLine: { style: "none" },
+      showValue: true, dataLabelPosition: type === "bar" ? "outEnd" : "t",
+      dataLabelColor: C.text, dataLabelFontSize: 12, dataLabelFontFace: FONT_NUM,
+      dataLabelFormatCode: "General",
+      varyColors: false,
+      showLegend: (data || []).length > 1,
+      legendPos: "b", legendColor: C.textMid, legendFontSize: 12, legendFontFace: FONT_BODY,
+      showTitle: false,
+    };
+    if (type === "line") Object.assign(base, { lineSize: 2.5, lineSmooth: false, lineDataSymbol: "circle", lineDataSymbolSize: 6 });
+    if (type === "pie" || type === "doughnut") Object.assign(base, { showPercent: true, dataLabelPosition: "bestFit", showValue: false });
+    s.addChart(T, data, { ...base, ...opt });
   }
 
   // ---- 页面骨架 ----
@@ -231,7 +265,7 @@ function createEngine(pres) {
     pres, C, IK, FA, FONT, FONT_TITLE, FONT_BODY, FONT_NUM, MONO, LH_BODY, rt, rtBul, PW, PH, MARGIN, RIGHT, CONTENT_W, BTOP, BBOT, GAP, botY, RAD, RADS,
     RR, RECT, OVAL, LINE,
     ICON, iconCircle, iconAt, chipOnPanel,
-    card, panel, groupBox, connector, tabCard, numDot, statCard, sectionLabel,
+    card, panel, groupBox, connector, tabCard, numDot, statCard, sectionLabel, softChart,
     addHeader, addFooter, addPageTitle, newSlide, row,
   };
 }
